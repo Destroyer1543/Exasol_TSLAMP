@@ -4,6 +4,9 @@ A crisis intelligence platform that ingests live news, builds a causal chain gra
 
 ---
 
+<img width="1920" height="955" alt="3" src="https://github.com/user-attachments/assets/b4743eff-caad-45e5-ba4b-3cec7538e26a" />
+
+
 ## What It Does
 
 Most tools show you *what* is happening. ARIA shows you *why* it is happening and *where* it is heading.
@@ -31,6 +34,9 @@ Given a query like "Red Sea shipping crisis", ARIA:
 
 ---
 
+<img width="1920" height="955" alt="5" src="https://github.com/user-attachments/assets/9bef152c-2ae4-4cee-bc95-374b4bf11adf" />
+
+
 ## Project Structure
 
 ```
@@ -51,6 +57,9 @@ Given a query like "Red Sea shipping crisis", ARIA:
 ```
 
 ---
+
+<img width="1920" height="959" alt="6" src="https://github.com/user-attachments/assets/c1eb669e-4543-48f7-89e7-1effc00393ee" />
+
 
 ## Local Development
 

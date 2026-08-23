@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
+import asyncio
 
 from ..graph.knowledge_graph import get_graph
 from ..graph.dependency_engine import predict_cascades
@@ -10,6 +11,9 @@ from ..extraction.gemini_extractor import (
 )
 from ..scraper.scheduler import run_scrape_cycle, get_last_scrape
 from ..scraper.rss_client import fetch_articles
+from ..storage.exasol_client import get_analytics as get_exasol_analytics
+from ..storage.exasol_client import get_status as get_exasol_status
+from ..storage.exasol_client import save_investigation
 
 router = APIRouter()
 
@@ -203,6 +207,10 @@ async def investigate(req: InvestigateRequest):
         existing_graph_summary=g.get_summary_for_llm(None),
         deep=req.deep,
     )
+    try:
+        result["exasol"] = await asyncio.to_thread(save_investigation, query, result, articles)
+    except Exception as exc:
+        result["exasol"] = {"stored": False, "error": str(exc)}
     return result
 
 
@@ -328,3 +336,18 @@ async def get_stats():
         **graph_json["stats"],
         "last_scrape": get_last_scrape(),
     }
+
+
+# â”€â”€ Exasol Personal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+@router.get("/exasol/status")
+async def exasol_status():
+    return await asyncio.to_thread(get_exasol_status)
+
+
+@router.get("/exasol/analytics")
+async def exasol_analytics():
+    try:
+        return await asyncio.to_thread(get_exasol_analytics)
+    except Exception as exc:
+        return {"enabled": True, "connected": False, "message": str(exc)}

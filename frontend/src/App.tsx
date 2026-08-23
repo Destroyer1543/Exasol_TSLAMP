@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { api } from './api/client'
-import type { InvestigationResult, WhatIfResult } from './types'
+import type { InvestigationResult, WhatIfResult, ExasolStatus, ExasolAnalytics } from './types'
 import { SEV_COLOR } from './types'
 import InvestigationGraph from './components/InvestigationGraph/InvestigationGraph'
 import GlobalMap          from './components/GlobalMap/GlobalMap'
@@ -31,7 +31,7 @@ function Prose({ text, className }: { text: string; className?: string }) {
 }
 
 type View     = 'investigate' | 'map'
-type RightTab = 'summary' | 'whatif' | 'addnode'
+type RightTab = 'summary' | 'exasol' | 'whatif' | 'addnode'
 
 const PROGRESS_STEPS = [
   'Fetching live news…',
@@ -108,6 +108,9 @@ export default function App() {
   const [addNodeError,   setAddNodeError]   = useState<string | null>(null)
   const [newNodeIds,     setNewNodeIds]     = useState<Set<string>>(new Set())
 
+  const [exasolStatus,    setExasolStatus]    = useState<ExasolStatus | null>(null)
+  const [exasolAnalytics, setExasolAnalytics] = useState<ExasolAnalytics | null>(null)
+
   const selectedNode = result?.nodes.find(n => n.id === selectedId) ?? null
 
   const displayNodes = useMemo(() => {
@@ -145,6 +148,20 @@ export default function App() {
       .map(([sector, names]) => ({ sector, count: names.length }))
   }, [result])
 
+  const refreshExasol = useCallback(async () => {
+    try {
+      const status = await api.exasolStatus()
+      setExasolStatus(status)
+      if (status.connected) setExasolAnalytics(await api.exasolAnalytics())
+      else setExasolAnalytics(null)
+    } catch {
+      setExasolStatus({ enabled: false, connected: false, schema: 'ARIA', message: 'Exasol status unavailable', counts: {} })
+      setExasolAnalytics(null)
+    }
+  }, [])
+
+  useEffect(() => { refreshExasol() }, [refreshExasol])
+
   const handleInvestigate = async () => {
     if (!query.trim() || loading) return
     setLoading(true); setError(null); setResult(null)
@@ -163,6 +180,7 @@ export default function App() {
       const res = await api.investigate(query.trim(), deep)
       if (res.error && !res.nodes?.length) setError(res.error)
       else setResult(res)
+      refreshExasol()
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Investigation failed')
     } finally {
@@ -288,8 +306,13 @@ export default function App() {
 
         <div className="ml-auto flex items-center gap-2.5 shrink-0">
           <div className="flex items-center gap-1.5 text-[9px] text-dim/50 tracking-[0.12em]">
+            <span className={`w-1.5 h-1.5 rounded-full ${exasolStatus?.connected ? 'bg-intel animate-pulse' : 'bg-dim/40'}`} />
+            EXASOL {exasolStatus?.connected ? 'ONLINE' : 'OFFLINE'}
+          </div>
+          <div className="h-3.5 w-px bg-border2" />
+          <div className="flex items-center gap-1.5 text-[9px] text-dim/50 tracking-[0.12em]">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            GEMINI 2.5
+            GROQ
           </div>
           <div className="h-3.5 w-px bg-border2" />
           <div className="font-display text-[8px] text-dim/30 tracking-[0.22em]">RESTRICTED</div>
@@ -494,7 +517,7 @@ export default function App() {
             <>
               {/* Tab bar */}
               <div className="flex border-b border-border shrink-0">
-                {([['summary','SUMMARY'],['whatif','WHAT-IF'],['addnode','+ NODE']] as [RightTab, string][]).map(([tab, label]) => (
+                {([['summary','SUMMARY'],['exasol','EXASOL'],['whatif','WHAT-IF'],['addnode','+ NODE']] as [RightTab, string][]).map(([tab, label]) => (
                   <button key={tab} onClick={() => setRightTab(tab)}
                     className={`flex-1 font-display font-semibold text-[10px] py-2.5 tracking-[0.14em] transition-colors border-b-2 ${
                       rightTab === tab
@@ -504,6 +527,9 @@ export default function App() {
                     {label}
                     {tab === 'whatif' && whatIfResult && (
                       <span className="ml-1 alert-blink text-orange-400">●</span>
+                    )}
+                    {tab === 'exasol' && exasolStatus?.connected && (
+                      <span className="ml-1 text-intel">●</span>
                     )}
                   </button>
                 ))}
@@ -581,6 +607,95 @@ export default function App() {
               )}
 
               {/* ── WHAT-IF TAB ── */}
+              {rightTab === 'exasol' && (
+                <div className="p-4 space-y-5 flex-1 overflow-y-auto">
+                  <div>
+                    <SectionHeader label="Exasol Personal" />
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className={`w-2 h-2 rounded-full ${exasolStatus?.connected ? 'bg-intel animate-pulse' : 'bg-dim/40'}`} />
+                      <span className={exasolStatus?.connected ? 'text-intel' : 'text-dim'}>
+                        {exasolStatus?.connected ? `Connected to ${exasolStatus.schema}` : 'Not connected'}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-dim/70 leading-relaxed mt-2">
+                      {exasolStatus?.message ?? 'Checking Exasol status...'}
+                    </p>
+                  </div>
+
+                  {result.exasol && (
+                    <div className="border border-border2 bg-surface2 p-3">
+                      <div className="font-display text-[9px] text-dim/65 tracking-[0.22em] uppercase mb-2">Current Write</div>
+                      {result.exasol.stored ? (
+                        <div className="space-y-1.5 text-[11px] text-dim">
+                          <div><span className="text-intel">ID</span> {result.exasol.investigation_id}</div>
+                          <div>{result.exasol.articles ?? 0} articles / {result.exasol.nodes ?? 0} nodes / {result.exasol.edges ?? 0} edges persisted</div>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-dim/70">{result.exasol.error ?? result.exasol.message ?? 'Not persisted'}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {exasolStatus?.counts && Object.keys(exasolStatus.counts).length > 0 && (
+                    <div>
+                      <SectionHeader label="Persisted Rows" />
+                      <div className="grid grid-cols-2 gap-2">
+                        {Object.entries(exasolStatus.counts).map(([name, count]) => (
+                          <div key={name} className="border border-border2 bg-surface2 px-2.5 py-2">
+                            <div className="text-intel font-display text-sm leading-none">{count}</div>
+                            <div className="text-[8px] text-dim/60 uppercase tracking-[0.12em] mt-1">{name.replace('_', ' ')}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {exasolAnalytics?.top_countries && exasolAnalytics.top_countries.length > 0 && (
+                    <div>
+                      <SectionHeader label="High Risk Countries" />
+                      <div className="space-y-1.5">
+                        {exasolAnalytics.top_countries.map(row => (
+                          <div key={row.country} className="flex justify-between text-xs border-b border-border/50 pb-1">
+                            <span className="text-dim">{row.country}</span>
+                            <span className="text-intel">{row.crisis_count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {exasolAnalytics?.strongest_edges && exasolAnalytics.strongest_edges.length > 0 && (
+                    <div>
+                      <SectionHeader label="Strongest Links" />
+                      <div className="space-y-2">
+                        {exasolAnalytics.strongest_edges.slice(0, 5).map((edge, i) => (
+                          <div key={`${edge.source_id}-${edge.target_id}-${i}`} className="text-[10px] text-dim leading-snug">
+                            <span className="text-text">{edge.source_id}</span>
+                            <span className="text-intel mx-1">{edge.relationship}</span>
+                            <span className="text-text">{edge.target_id}</span>
+                            <span className="text-dim/55 ml-1">{Math.round(edge.strength * 100)}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {exasolAnalytics?.recent_investigations && exasolAnalytics.recent_investigations.length > 0 && (
+                    <div>
+                      <SectionHeader label="Recent Investigations" />
+                      <div className="space-y-2">
+                        {exasolAnalytics.recent_investigations.map(inv => (
+                          <div key={inv.investigation_id} className="text-[10px] text-dim border-b border-border/50 pb-2">
+                            <div className="text-text leading-snug">{inv.title || inv.query}</div>
+                            <div className="text-dim/55 mt-0.5">{inv.articles_analyzed} articles</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {rightTab === 'whatif' && (
                 <div className="flex-1 overflow-y-auto flex flex-col">
                   {!whatIfResult ? (
@@ -707,7 +822,7 @@ export default function App() {
                   <div className="border-t border-border pt-3">
                     <div className="font-display text-[9px] text-dim/65 tracking-[0.22em] uppercase mb-2.5">How It Works</div>
                     {[
-                      'Gemini creates a structured node from your description',
+                      'Groq creates a structured node from your description',
                       'Scans the existing graph for causal connections',
                       'If a link is found, edges are added automatically',
                       'Unconnected nodes float freely in the graph',
@@ -742,7 +857,7 @@ export default function App() {
           <span className="tracking-[0.12em]">LIVE · GOOGLE NEWS RSS</span>
         </span>
         <span className="text-border2">│</span>
-        <span className="tracking-[0.1em]">GEMINI 2.5 FLASH</span>
+        <span className="tracking-[0.1em]">GROQ · GPT-OSS</span>
         <span className="text-border2">│</span>
         <span className="ml-auto font-display tracking-[0.18em] text-dim/25">ARIA v1.0 · GOOGLE HACKATHON 2026</span>
       </div>

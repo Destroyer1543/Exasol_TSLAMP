@@ -1,4 +1,7 @@
-import type { GraphData, CrisisDetail, Prediction, InvestigationResult, CrisisStory, WhatIfResult, InvestigationNode, InvestigationEdge } from '../types'
+import type {
+  GraphData, CrisisDetail, Prediction, InvestigationResult, CrisisStory,
+  WhatIfResult, InvestigationNode, InvestigationEdge, ExasolStatus, ExasolAnalytics,
+} from '../types'
 
 const BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
 
@@ -19,6 +22,8 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 
 export const api = {
   graph:       ()          => get<GraphData>('/api/graph'),
+  exasolStatus: ()         => get<ExasolStatus>('/api/exasol/status'),
+  exasolAnalytics: ()      => get<ExasolAnalytics>('/api/exasol/analytics'),
   crisis:      (id: string) => get<CrisisDetail>(`/api/crisis/${id}`),
   predictions: (id: string) => get<{ predictions: Prediction[] }>(`/api/crisis/${id}/predictions`),
   briefing:    (id?: string) => post<{ briefing: string }>('/api/briefing', { focus_id: id ?? null }),

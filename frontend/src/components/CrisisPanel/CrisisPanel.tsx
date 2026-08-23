@@ -213,7 +213,7 @@ export default function CrisisPanel({ crisis, onClose }: Props) {
                 disabled={loadingBriefing}
                 className="w-full text-xs border border-border text-dim hover:text-text hover:border-gray-500 py-2 rounded-lg transition-colors disabled:opacity-40"
               >
-                {loadingBriefing ? 'Generating…' : '⚡ Generate Gemini Briefing'}
+                {loadingBriefing ? 'Generating…' : '⚡ Generate Groq Briefing'}
               </button>
           }
         </div>

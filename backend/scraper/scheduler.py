@@ -3,6 +3,7 @@ Hourly scrape + extraction + graph update job.
 """
 
 import logging
+import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime
 
@@ -10,6 +11,7 @@ from .rss_client import fetch_articles
 from ..extraction.gemini_extractor import extract_from_articles
 from ..graph.knowledge_graph import get_graph, CrisisNode, CrisisEdge
 from ..extraction.crisis_types import CrisisType, Severity, RelationshipType
+from ..storage.exasol_client import is_exasol_enabled, sync_base_graph
 
 log = logging.getLogger("nexus.scheduler")
 
@@ -90,6 +92,8 @@ async def run_scrape_cycle():
             "articles_found": len(articles),
             "new_crises": new_crises_count,
         }
+        if is_exasol_enabled():
+            await asyncio.to_thread(sync_base_graph, graph)
         log.info(f"Scrape complete: {new_crises_count} new crises added")
 
     except Exception as e:

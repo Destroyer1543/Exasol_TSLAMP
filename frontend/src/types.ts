@@ -123,6 +123,15 @@ export interface InvestigationResult {
   edges: InvestigationEdge[]
   recommendations: string[]
   articles_analyzed: number
+  exasol?: {
+    stored: boolean
+    investigation_id?: string
+    articles?: number
+    nodes?: number
+    edges?: number
+    message?: string
+    error?: string
+  }
   error?: string
 }
 
@@ -173,6 +182,37 @@ export interface WhatIfResult {
   new_edges: InvestigationEdge[]
   key_changes: string[]
   error?: string
+}
+
+export interface ExasolStatus {
+  enabled: boolean
+  connected: boolean
+  schema: string
+  message: string
+  counts: Record<string, number>
+}
+
+export interface ExasolAnalytics {
+  enabled: boolean
+  connected: boolean
+  schema?: string
+  message?: string
+  top_countries?: { country: string; crisis_count: number }[]
+  severity_mix?: { severity: Severity; crisis_count: number }[]
+  strongest_edges?: {
+    source_id: string
+    target_id: string
+    relationship: RelationshipType
+    strength: number
+    lag_days: number
+  }[]
+  recent_investigations?: {
+    investigation_id: string
+    query: string
+    title: string
+    articles_analyzed: number
+    created_at: string
+  }[]
 }
 
 export const REL_COLOR: Record<RelationshipType, string> = {

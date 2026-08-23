@@ -7,8 +7,9 @@ import asyncio
 import json
 import os
 import re
-import google.generativeai as genai
 from typing import Optional
+
+from ..ai.llm import get_model as _get_llm_model
 
 
 def _extract_json(text: str) -> str:
@@ -25,18 +26,30 @@ def _extract_json(text: str) -> str:
             text = m.group(0)
     return text
 
-_model: Optional[genai.GenerativeModel] = None
 
+def _loads(raw: str) -> dict:
+    """Parse model JSON, salvaging output truncated by the token cap.
 
-def _get_model() -> genai.GenerativeModel:
-    global _model
-    if _model is None:
-        api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key:
-            raise RuntimeError("GEMINI_API_KEY not set")
-        genai.configure(api_key=api_key)
-        _model = genai.GenerativeModel("gemini-2.5-flash")
-    return _model
+    Free-tier token limits can cut the JSON mid-array. When a clean parse
+    fails, drop the incomplete trailing element (back to the last complete
+    ``}``) and balance-close open arrays/objects so the completed nodes and
+    edges still load.
+    """
+    text = _extract_json(raw)
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        cut = text.rfind('}')
+        if cut == -1:
+            raise
+        frag = text[:cut + 1]
+        frag += ']' * max(0, frag.count('[') - frag.count(']'))
+        frag += '}' * max(0, frag.count('{') - frag.count('}'))
+        return json.loads(frag)
+
+def _get_model():
+    """Return the active LLM (Groq). Name kept for existing call sites."""
+    return _get_llm_model()
 
 
 async def extract_from_articles(articles: list[dict]) -> dict:
@@ -50,7 +63,7 @@ async def extract_from_articles(articles: list[dict]) -> dict:
     # Format articles for prompt
     article_text = "\n\n".join(
         f"[{i+1}] SOURCE: {a.get('source','')}\nTITLE: {a.get('title','')}\nSUMMARY: {a.get('description','')}"
-        for i, a in enumerate(articles[:20])  # limit to 20 articles per batch
+        for i, a in enumerate(articles[:10])  # limit per batch (Groq free-tier 8k TPM)
     )
 
     prompt = f"""You are a global crisis intelligence analyst. Analyze these news articles and extract crisis intelligence.
@@ -105,8 +118,7 @@ Rules:
     try:
         model = _get_model()
         response = await asyncio.wait_for(asyncio.to_thread(model.generate_content, prompt), timeout=180)
-        text = _extract_json(response.text)
-        return json.loads(text)
+        return _loads(response.text)
     except Exception as e:
         return {"new_crises": [], "new_relationships": [], "updates": [], "error": str(e)}
 
@@ -116,17 +128,17 @@ async def investigate_query(query: str, articles: list[dict], existing_graph_sum
     Takes a freeform user query (e.g. 'petroleum shortage due to war') and
     news articles, and returns a focused crisis sub-graph + analysis.
     """
-    max_articles = 35 if deep else 15
+    max_articles = 12 if deep else 8  # keep request under Groq free-tier 8k TPM
     article_text = ""
     if articles:
         article_text = "\n\n".join(
-            f"[{i+1}] {a.get('source','')}: {a.get('title','')}\n{a.get('description','')}"
+            f"[{i+1}] {a.get('source','')}: {a.get('title','')}\n{(a.get('description','') or '')[:220]}"
             for i, a in enumerate(articles[:max_articles])
         )
     else:
         article_text = "(No live articles fetched — reasoning from knowledge base)"
 
-    node_range   = "20-30" if deep else "10-15"
+    node_range   = "10-14" if deep else "7-9"
     depth_clause = (
         "Go DEEP: trace root causes back 4-5 hops, include intermediate factors, "
         "geographic chokepoints (straits, canals, corridors), and second-order spillovers. "
@@ -166,8 +178,8 @@ Return ONLY valid JSON:
       "country": "Country or region",
       "lat": 0.0,
       "lon": 0.0,
-      "description": "2-3 sentence factual description with specifics",
-      "sectors_affected": ["ENERGY","FOOD","TRADE","FINANCE","HEALTH","TRANSPORT","POLITICS","HUMANITARIAN","TECHNOLOGY"],
+      "description": "One concise factual sentence with a specific detail",
+      "sectors_affected": ["ENERGY","FOOD","TRADE"],
       "tags": ["tag1","tag2"],
       "start_date": "YYYY-MM-DD"
     }}
@@ -200,8 +212,7 @@ Rules:
     try:
         model = _get_model()
         response = await asyncio.wait_for(asyncio.to_thread(model.generate_content, prompt), timeout=180)
-        text = _extract_json(response.text)
-        result = json.loads(text)
+        result = _loads(response.text)
         # Inject source count
         result["articles_analyzed"] = len(articles)
         return result
@@ -393,8 +404,7 @@ Rules:
     try:
         model = _get_model()
         response = await asyncio.wait_for(asyncio.to_thread(model.generate_content, prompt), timeout=180)
-        text = _extract_json(response.text)
-        return json.loads(text)
+        return _loads(response.text)
     except Exception as e:
         return {
             "scenario_title": scenario[:60],
@@ -458,8 +468,7 @@ Rules:
     try:
         model = _get_model()
         response = await asyncio.wait_for(asyncio.to_thread(model.generate_content, prompt), timeout=180)
-        text = _extract_json(response.text)
-        result = json.loads(text)
+        result = _loads(response.text)
         # Guard against id collision
         if result.get("node"):
             existing_ids = {n["id"] for n in existing_nodes}

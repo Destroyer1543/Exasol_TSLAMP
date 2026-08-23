@@ -1,0 +1,31 @@
+# Local free Exasol for ARIA — no AWS/Azure needed.
+# Community single-node Exasol DB in Docker. Default creds: SYS / exasol
+#
+#   docker compose -f docker-compose.exasol.yml up -d
+#   docker compose -f docker-compose.exasol.yml logs -f   # wait for "stage4: All stages finished"
+#   docker compose -f docker-compose.exasol.yml down       # keep volume
+#   docker compose -f docker-compose.exasol.yml down -v    # wipe data
+#
+# Then in backend/.env:
+#   EXASOL_ENABLED=true
+#   EXASOL_DSN=127.0.0.1:8563
+#   EXASOL_USER=sys
+#   EXASOL_PASSWORD=exasol
+
+services:
+  exasol:
+    image: exasol/docker-db:latest
+    container_name: aria-exasol
+    privileged: true          # docker-db requires privileged mode
+    stop_grace_period: 120s
+    ports:
+      - "8563:8563"           # database (PyExasol / EXASOL_DSN) — all ARIA needs
+    volumes:
+      - exasol-data:/exa
+    shm_size: "2gb"
+    # DB is ready ~1-2 min after start. Confirm with:
+    #   docker logs aria-exasol | grep "All stages finished"
+    #   python -c "import ssl,pyexasol; pyexasol.connect(dsn='127.0.0.1:8563',user='sys',password='exasol',encryption=True,websocket_sslopt={'cert_reqs':ssl.CERT_NONE}).execute('SELECT 1')"
+
+volumes:
+  exasol-data:

@@ -1,176 +1,214 @@
-# ARIA — Adaptive Response Intelligence Architecture
+# ARIA - Adaptive Response Intelligence Architecture
 
-> **Find the real truth behind crisis.**
+ARIA is a crisis intelligence platform for tracing why a crisis is happening, how it propagates, and which second-order risks may emerge next.
 
-A crisis intelligence platform that ingests live news, builds a causal chain graph of interconnected crises, and projects forward in time — turning fragmented information into an actionable reasoning network.
+The app ingests live news, uses an LLM (Groq) to extract crisis nodes and causal relationships, stores the intelligence graph in Exasol Personal, and renders an interactive graph/map for investigation and scenario simulation.
 
----
+## Problem
 
-<img width="1920" height="955" alt="3" src="https://github.com/user-attachments/assets/b4743eff-caad-45e5-ba4b-3cec7538e26a" />
+Crisis data is fragmented across news feeds, agencies, and regional reporting. Analysts often see isolated events, but not the causal chain behind them or the downstream dependencies they may trigger.
 
+ARIA turns unstructured crisis reporting into a queryable intelligence graph:
 
-## What It Does
+- What are the root causes?
+- Which chokepoints or sectors are affected?
+- Which countries and sectors are accumulating risk?
+- What happens if a scenario changes?
 
-Most tools show you *what* is happening. ARIA shows you *why* it is happening and *where* it is heading.
+## Solution
 
-Given a query like "Red Sea shipping crisis", ARIA:
+Given a query such as `Red Sea shipping crisis`, ARIA:
 
-1. Fetches live news from multiple feeds
-2. Uses Gemini AI to extract crisis nodes, causal relationships, and confidence scores
-3. Renders an interactive force-directed graph tracing root causes 4–5 hops back
-4. Detects resource conflicts when multiple crises compete for the same sector
-5. Projects cascade risks 30–90 days forward
-6. Lets you run "what if" scenario simulations on the live graph
+1. Fetches recent live news from Google News RSS.
+2. Sends article summaries and existing crisis context to the LLM (Groq).
+3. Extracts structured crisis nodes, causal edges, confidence, severity, geography, and affected sectors.
+4. Persists articles, investigations, nodes, and edges in Exasol Personal.
+5. Uses Exasol SQL analytics to surface persisted counts, high-risk countries, strongest causal links, and recent investigations.
+6. Uses NetworkX for in-memory graph traversal and D3/Google Maps for interactive exploration.
+7. Supports what-if simulation and AI-assisted node injection.
 
----
+## How Exasol Personal Is Used
+
+Exasol Personal is the primary data platform for ARIA.
+
+The backend initializes an `ARIA` schema in Exasol and stores:
+
+- Seeded baseline crisis graph in `BASE_CRISIS_NODES` and `BASE_CRISIS_EDGES`
+- RSS articles in `RSS_ARTICLES`
+- User investigations in `INVESTIGATIONS`
+- LLM-extracted investigation nodes in `CRISIS_NODES`
+- LLM-extracted causal links in `CRISIS_EDGES`
+
+ARIA then queries Exasol for analytics shown in the `EXASOL` tab:
+
+- Persisted row counts
+- Recently stored investigations
+- High-risk country concentration
+- Strongest causal relationships by edge strength
+
+The app remains usable without Exasol credentials for local UI/backend development, but hackathon submission mode should run with `EXASOL_ENABLED=true`.
 
 ## Stack
 
 | Layer | Technology |
-|---|---|
-| Frontend | React + TypeScript, D3.js, Tailwind CSS, Google Maps JS API |
-| Backend | Python 3.11, FastAPI |
-| AI | Gemini 2.5 Flash |
-| Graph Engine | NetworkX |
-| News | Google News RSS |
-
----
-
-
+| --- | --- |
+| Data platform | Exasol Personal |
+| Backend | Python 3.11+, FastAPI, PyExasol, NetworkX |
+| AI | Groq (gpt-oss-120b, free tier) |
+| News ingestion | Google News RSS |
+| Frontend | React, TypeScript, Vite, D3.js, Tailwind CSS, Google Maps JS API |
 
 ## Project Structure
 
-```
-├── backend/                  # FastAPI backend
-│   ├── api/                  # Route handlers
-│   ├── extraction/           # Gemini extraction pipeline
-│   ├── graph/                # Knowledge graph engine
-│   ├── scraper/              # RSS ingestion + scheduler
-│   ├── main.py
-│   └── requirements.txt
-├── frontend/                 # React frontend
-│   ├── src/
-│   │   ├── components/       # InvestigationGraph, GlobalMap, InvNodePanel
-│   │   ├── api/              # API client
-│   │   ├── App.tsx
-│   │   └── types.ts
-│   └── package.json
+```text
+backend/
+  api/                 FastAPI route handlers
+  extraction/          LLM extraction and scenario prompts
+  graph/               NetworkX graph model, seed data, cascade scoring
+  scraper/             RSS ingestion and scheduler
+  storage/             Exasol Personal connector, schema, persistence, analytics
+frontend/
+  src/
+    api/               Frontend API client
+    components/        Graph, map, and node panels
+    App.tsx            Main investigation UI
 ```
 
----
-
-## Screenshots
-
-<img width="1920" height="959" alt="6" src="https://github.com/user-attachments/assets/c1eb669e-4543-48f7-89e7-1effc00393ee" />
-
-<img width="1920" height="955" alt="5" src="https://github.com/user-attachments/assets/9bef152c-2ae4-4cee-bc95-374b4bf11adf" />
-
-<img width="1920" height="956" alt="4" src="https://github.com/user-attachments/assets/7ad11598-1c48-417f-9137-4e9a8233d69a" />
-
-
-## Local Development
-
-### Prerequisites
+## Prerequisites
 
 - Python 3.11+
 - Node.js 20+
-- A [Gemini API key](https://aistudio.google.com)
-- A [Google Maps JavaScript API key](https://console.cloud.google.com)
+- Groq API key (free tier — https://console.groq.com/keys)
+- Google Maps JavaScript API key
+- An Exasol database (see options below)
 
-### Backend
+## Exasol Setup
+
+ARIA speaks to Exasol over PyExasol (`host:port`, `sys` user, password), so any
+Exasol deployment works. Pick one:
+
+### Option A — Local Docker (free, Windows-friendly, used for dev/demo)
+
+Requires Docker Desktop. From the repo root:
+
+```bash
+docker compose -f docker-compose.exasol.yml up -d
+docker compose -f docker-compose.exasol.yml logs -f   # wait for init to finish
+```
+
+This runs a single-node Exasol at `127.0.0.1:8563` with credentials `sys` /
+`exasol`. Tear down with `... down` (keep data) or `... down -v` (wipe).
+
+### Option B — Exasol Personal (AWS / Azure)
+
+Install Exasol Launcher, then deploy:
+
+```bash
+exasol install aws               # or: exasol install azure --location <region>
+exasol info                      # host, port, credentials
+```
+
+New AWS/Azure accounts include free credits that cover a short demo window.
+Use the host, port, and credentials from `exasol info` / `secrets.json` in
+`backend/.env`.
+
+## Backend Setup
 
 ```bash
 cd backend
 cp .env.example .env
-# Add your GEMINI_API_KEY to .env
+```
 
+Set (values below match Option A local Docker):
+
+```env
+GROQ_API_KEY=your_groq_key
+LLM_MODEL=openai/gpt-oss-120b
+EXASOL_ENABLED=true
+EXASOL_DSN=127.0.0.1:8563
+EXASOL_USER=sys
+EXASOL_PASSWORD=exasol
+EXASOL_SCHEMA=ARIA
+EXASOL_ENCRYPTION=true
+EXASOL_CERT_VERIFY=false
+```
+
+For Option B, set `EXASOL_DSN`/`EXASOL_PASSWORD` from `exasol info`.
+
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
+```
 
-# Run from project root
-cd ..
+Run from the repository root:
+
+```bash
 uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### Frontend
+Useful backend checks:
+
+```bash
+curl http://localhost:8000/health
+curl http://localhost:8000/api/exasol/status
+curl http://localhost:8000/api/exasol/analytics
+```
+
+## Frontend Setup
 
 ```bash
 cd frontend
 cp .env.example .env
-# Fill in VITE_API_BASE and VITE_GOOGLE_MAPS_API_KEY
+```
 
+Set:
+
+```env
+VITE_API_BASE=http://localhost:8000
+VITE_GOOGLE_MAPS_API_KEY=your_google_maps_key
+```
+
+Install and run:
+
+```bash
 npm install
 npm run dev
 ```
 
-Frontend runs at `http://localhost:3000`, backend at `http://localhost:8000`.
+Frontend runs at `http://localhost:3000`.
 
----
+## Demo Flow
 
-## Deployment (Google Cloud Run)
+1. Start Exasol Personal and the backend.
+2. Open the frontend.
+3. Run an investigation such as `Red Sea shipping crisis`.
+4. Show the generated causal graph.
+5. Open the `EXASOL` tab to show the persisted investigation ID, row counts, recent investigations, and SQL-backed analytics.
+6. Run a what-if scenario such as `What if the Strait of Hormuz closes?`
 
-Both services are containerized and deploy to Cloud Run with scale-to-zero (no cost when idle).
+## Submission Materials
 
-### Backend
+For final submission, this repository should include:
+
+- Source code
+- This README with setup and run guide
+- Pitch deck PDF/PPT
+- Demo video link, maximum 3 minutes
+- Sample data, screenshots, and configuration notes as needed
+
+Suggested final additions:
+
+- `docs/pitch-deck.pdf`
+- `docs/screenshots/`
+- Demo video link in this README
+
+## Verification
+
+Current local checks:
 
 ```bash
-# Build image
-gcloud builds submit --config=cloudbuild-backend.yaml .
-
-# Deploy
-gcloud run deploy aria-backend \
-  --image=us-central1-docker.pkg.dev/YOUR_PROJECT/aria-repo/aria-backend:latest \
-  --platform=managed --region=us-central1 --allow-unauthenticated \
-  --set-env-vars="GEMINI_API_KEY=your_key" \
-  --memory=1Gi --timeout=300
+python -m compileall backend
+cd frontend && npm run build
 ```
 
-### Frontend
-
-```bash
-# Build image (bakes in API URL at build time)
-gcloud builds submit --config=cloudbuild-frontend.yaml .
-
-# Deploy
-gcloud run deploy aria-frontend \
-  --image=us-central1-docker.pkg.dev/YOUR_PROJECT/aria-repo/aria-frontend:latest \
-  --platform=managed --region=us-central1 --allow-unauthenticated \
-  --memory=256Mi --port=8080
-```
-
----
-
-## Key Features
-
-**Causal Chain Graph** — nodes are crises, edges are causal relationships with type, confidence score, and estimated lag in days. Chokepoints (straits, corridors, supply lines) are visually tagged.
-
-**Resource Conflict Detection** — automatically surfaces when multiple HIGH/CRITICAL crises compete for the same scarce sector (food, energy, health, water).
-
-**What-If Simulator** — type a hypothetical scenario, get a projected network showing which nodes escalate, de-escalate, or emerge as new factors.
-
-**Intel Brief** — Gemini generates a commander-ready 3-paragraph narrative: root cause chain, active cascades, top risks in the next 30–90 days.
-
-**Node Injection** — describe a new crisis factor in plain text; AI creates the node, finds causal connections, and injects it live into the graph.
-
----
-
-## Environment Variables
-
-### Backend (`backend/.env`)
-
-| Variable | Description |
-|---|---|
-| `GEMINI_API_KEY` | Google Gemini API key |
-
-### Frontend (`frontend/.env`)
-
-| Variable | Description |
-|---|---|
-| `VITE_API_BASE` | Backend API URL (e.g. `http://localhost:8000`) |
-| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps JavaScript API key |
-| `VITE_WS_URL` | WebSocket URL (optional) |
-
----
-
-## Watch Demo
-
-[Click here to watch the demo](https://drive.google.com/file/d/1j0pDzKA2jNL78P4p_bd8PwLiUDKNQT87/view?usp=sharing)

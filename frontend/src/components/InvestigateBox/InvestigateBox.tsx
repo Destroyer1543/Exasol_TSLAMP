@@ -243,7 +243,7 @@ export default function InvestigateBox() {
       {loading && (
         <div className="flex flex-col items-center justify-center flex-1 gap-4">
           <div className="text-3xl opacity-40" style={{ animation: 'spin 2s linear infinite' }}>◈</div>
-          <p className="text-sm text-dim animate-pulse">Fetching live news · Building causal graph with Gemini…</p>
+          <p className="text-sm text-dim animate-pulse">Fetching live news · Building causal graph with Groq…</p>
         </div>
       )}
 
@@ -295,7 +295,7 @@ export default function InvestigateBox() {
             {/* Title */}
             <div>
               <h3 className="text-sm font-bold text-text leading-snug">{result.title}</h3>
-              <p className="text-[9px] text-dim mt-0.5">{result.articles_analyzed} articles · Gemini 2.5 Flash</p>
+              <p className="text-[9px] text-dim mt-0.5">{result.articles_analyzed} articles · Groq</p>
             </div>
 
             {/* Summary */}

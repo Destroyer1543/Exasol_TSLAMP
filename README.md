@@ -2,8 +2,6 @@
 
 > **Find the real truth behind crisis.**
 
-[![Watch Demo](https://drive.google.com/thumbnail?id=1j0pDzKA2jNL78P4p_bd8PwLiUDKNQT87&sz=w1280)](https://drive.google.com/file/d/1j0pDzKA2jNL78P4p_bd8PwLiUDKNQT87/view?usp=sharing)
-
 A crisis intelligence platform that ingests live news, builds a causal chain graph of interconnected crises, and projects forward in time — turning fragmented information into an actionable reasoning network.
 
 ---
@@ -170,3 +168,9 @@ gcloud run deploy aria-frontend \
 | `VITE_API_BASE` | Backend API URL (e.g. `http://localhost:8000`) |
 | `VITE_GOOGLE_MAPS_API_KEY` | Google Maps JavaScript API key |
 | `VITE_WS_URL` | WebSocket URL (optional) |
+
+---
+
+## Watch Demo
+
+[Click here to watch the demo](https://drive.google.com/file/d/1j0pDzKA2jNL78P4p_bd8PwLiUDKNQT87/view?usp=sharing)

@@ -2,6 +2,8 @@
 
 > **Find the real truth behind crisis.**
 
+[![Watch Demo](https://drive.google.com/thumbnail?id=1j0pDzKA2jNL78P4p_bd8PwLiUDKNQT87&sz=w1280)](https://drive.google.com/file/d/1j0pDzKA2jNL78P4p_bd8PwLiUDKNQT87/view?usp=sharing)
+
 A crisis intelligence platform that ingests live news, builds a causal chain graph of interconnected crises, and projects forward in time — turning fragmented information into an actionable reasoning network.
 
 ---

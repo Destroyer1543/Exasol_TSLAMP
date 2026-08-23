@@ -5,6 +5,7 @@ ARIA is a crisis intelligence platform for tracing why a crisis is happening, ho
 
 The app ingests live news, uses an LLM (Groq) to extract crisis nodes and causal relationships, stores the intelligence graph in Exasol Personal, and renders an interactive graph/map for investigation and scenario simulation.
 
+<img width="1920" height="955" alt="image" src="https://github.com/user-attachments/assets/1ef64b71-24db-457e-baf7-cd3b9a0e287f" />
 
 
 ## Problem
@@ -218,3 +219,6 @@ python -m compileall backend
 cd frontend && npm run build
 ```
 
+<img width="1920" height="956" alt="image" src="https://github.com/user-attachments/assets/eeeba617-e3b0-4d20-84cc-315ff36c9861" />
+<img width="1920" height="955" alt="image" src="https://github.com/user-attachments/assets/9659091e-df11-4a39-b7d0-d5a016ac4ee5" />
+<img width="1920" height="959" alt="image" src="https://github.com/user-attachments/assets/8db8fe93-82e8-44ed-8d0d-561a957ec1ab" />

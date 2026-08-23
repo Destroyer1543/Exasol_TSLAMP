@@ -1,5 +1,7 @@
 # ARIA — Adaptive Response Intelligence Architecture
 
+> **Find the real truth behind crisis.**
+
 A crisis intelligence platform that ingests live news, builds a causal chain graph of interconnected crises, and projects forward in time — turning fragmented information into an actionable reasoning network.
 
 ---

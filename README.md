@@ -5,7 +5,7 @@ ARIA is a crisis intelligence platform for tracing why a crisis is happening, ho
 
 The app ingests live news, uses an LLM (Groq) to extract crisis nodes and causal relationships, stores the intelligence graph in Exasol Personal, and renders an interactive graph/map for investigation and scenario simulation.
 
-<img width="296" height="148" alt="Picture9" src="https://github.com/user-attachments/assets/524ad348-2bd6-4e77-b458-3ee565558545" />
+
 
 ## Problem
 
@@ -30,7 +30,7 @@ Given a query such as `Red Sea shipping crisis`, ARIA:
 6. Uses NetworkX for in-memory graph traversal and D3/Google Maps for interactive exploration.
 7. Supports what-if simulation and AI-assisted node injection.
 
-<img width="296" height="148" alt="Picture7" src="https://github.com/user-attachments/assets/4fedb300-087f-4021-9d9a-416ac6ec614f" />
+
 
 ## How Exasol Personal Is Used
 
@@ -117,7 +117,6 @@ New AWS/Azure accounts include free credits that cover a short demo window.
 Use the host, port, and credentials from `exasol info` / `secrets.json` in
 `backend/.env`.
 
-<img width="293" height="147" alt="Picture1" src="https://github.com/user-attachments/assets/c01063fb-b386-44d6-866b-94520c835de6" />
 
 ## Backend Setup
 

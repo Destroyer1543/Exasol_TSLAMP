@@ -34,7 +34,6 @@ Given a query like "Red Sea shipping crisis", ARIA:
 
 ---
 
-<img width="1920" height="955" alt="5" src="https://github.com/user-attachments/assets/9bef152c-2ae4-4cee-bc95-374b4bf11adf" />
 
 
 ## Project Structure
@@ -58,7 +57,13 @@ Given a query like "Red Sea shipping crisis", ARIA:
 
 ---
 
+## Screenshots
+
 <img width="1920" height="959" alt="6" src="https://github.com/user-attachments/assets/c1eb669e-4543-48f7-89e7-1effc00393ee" />
+
+<img width="1920" height="955" alt="5" src="https://github.com/user-attachments/assets/9bef152c-2ae4-4cee-bc95-374b4bf11adf" />
+
+<img width="1920" height="956" alt="4" src="https://github.com/user-attachments/assets/7ad11598-1c48-417f-9137-4e9a8233d69a" />
 
 
 ## Local Development

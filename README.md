@@ -219,6 +219,14 @@ python -m compileall backend
 cd frontend && npm run build
 ```
 
+## Pitch Deck
+
+https://docs.google.com/presentation/d/1S_1_mn_YYqpgdWEbKRh_bbB_WNLiDPMw/edit?usp=sharing&ouid=107819819750313925051&rtpof=true&sd=true
+
+## Demo Video
+
+https://drive.google.com/file/d/1jli28A_dMxeY3-lCXZ51iZGtnTrTej20/view?usp=drive_link
+
 <img width="1920" height="956" alt="image" src="https://github.com/user-attachments/assets/eeeba617-e3b0-4d20-84cc-315ff36c9861" />
 <img width="1920" height="955" alt="image" src="https://github.com/user-attachments/assets/9659091e-df11-4a39-b7d0-d5a016ac4ee5" />
 <img width="1920" height="959" alt="image" src="https://github.com/user-attachments/assets/8db8fe93-82e8-44ed-8d0d-561a957ec1ab" />

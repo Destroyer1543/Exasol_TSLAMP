@@ -1,0 +1,50 @@
+# ── Claude / AI build artifacts ───────────────────────────────────────────────
+CLAUDE.md
+IMPLEMENTATION.md
+final.md
+.claude/
+memory/
+*.claude
+
+# ── Screenshots / planning assets ─────────────────────────────────────────────
+*.JPG
+*.jpg
+*.jpeg
+*.png
+!logo.png
+!logo1.png
+!frontend/public/*.png
+*.pdf
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.env
+.venv/
+venv/
+env/
+
+# ── Node / Frontend ────────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# ── Google Cloud Build ────────────────────────────────────────────────────────
+cloudbuild-backend.yaml
+cloudbuild-frontend.yaml
+Dockerfile.backend
+deploy/
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log

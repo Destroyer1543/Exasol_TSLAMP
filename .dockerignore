@@ -1,0 +1,9 @@
+frontend/
+frontend/node_modules/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+.git/
+.env
+*.md
+deploy/

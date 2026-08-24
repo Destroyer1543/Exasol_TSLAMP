@@ -194,21 +194,6 @@ Frontend runs at `http://localhost:3000`.
 5. Open the `EXASOL` tab to show the persisted investigation ID, row counts, recent investigations, and SQL-backed analytics.
 6. Run a what-if scenario such as `What if the Strait of Hormuz closes?`
 
-## Submission Materials
-
-For final submission, this repository should include:
-
-- Source code
-- This README with setup and run guide
-- Pitch deck PDF/PPT
-- Demo video link, maximum 3 minutes
-- Sample data, screenshots, and configuration notes as needed
-
-Suggested final additions:
-
-- `docs/pitch-deck.pdf`
-- `docs/screenshots/`
-- Demo video link in this README
 
 ## Verification
 
